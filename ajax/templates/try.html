@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生信息管理系统</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        .student-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+        }
+        .student-tab {
+            padding: 8px 16px;
+            background-color: #e9ecef;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .student-tab:hover {
+            background-color: #dee2e6;
+        }
+        .student-tab.active {
+            background-color: #4a6fdc;
+            color: white;
+        }
+        .document {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .info-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .info-label {
+            font-weight: bold;
+            width: 60px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <h1>学生信息管理系统</h1>
+    
+    <div class="student-tabs" id="studentTabs">
+        <div class="loading">正在加载学生数据...</div>
+    </div>
+
+    <div class="document">
+        <h2>学生信息</h2>
+        <div id="studentInfo">
+            <div class="info-card">
+                <p>请点击上方学生标签查看详细信息</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const studentTabs = document.getElementById('studentTabs');
+            const studentInfo = document.getElementById('studentInfo');
+            
+            // 从服务器获取学生数据
+            fetch('/students')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    return response.json();
+                })
+                .then(students => {
+                    // 清空加载提示
+                    studentTabs.innerHTML = '';
+                    
+                    // 创建学生标签
+                    for (const id in students) {
+                        const span = document.createElement('span');
+                        span.className = 'student-tab';
+                        span.id = id;
+                        span.textContent = students[id].name;
+                        
+                        span.onclick = function() {
+                            // 移除所有活动状态
+                            document.querySelectorAll('.student-tab').forEach(tab => {
+                                tab.classList.remove('active');
+                            });
+                            
+                            // 添加当前活动状态
+                            this.classList.add('active');
+                            
+                            // 显示学生信息
+                            const student = students[this.id];
+                            studentInfo.innerHTML = `
+                                <div class="info-card">
+                                    <div class="info-item">
+                                        <span class="info-label">姓名：</span>
+                                        <span>${student.name}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">年龄：</span>
+                                        <span>${student.age}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">年级：</span>
+                                        <span>${student.grade}</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">班级：</span>
+                                        <span>${student.class}</span>
+                                    </div>
+                                </div>
+                            `;
+                        };
+                        
+                        studentTabs.appendChild(span);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取学生数据失败:', error);
+                    studentTabs.innerHTML = '<div class="loading">加载数据失败，请刷新页面重试</div>';
+                });
+        });
+    </script>
+</body>
+</html>
