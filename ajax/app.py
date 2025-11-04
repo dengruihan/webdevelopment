@@ -19,10 +19,6 @@ def index():
 def get_students():
     return jsonify(students)
 
-@app.route('/clock')
-def clock():
-    return render_template('clock.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
