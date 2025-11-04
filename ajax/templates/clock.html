@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Timer - Vue.js</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .date-display {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .time-display {
+            font-size: 4rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 5px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .time-display span {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .time-display span:hover {
+            transform: scale(1.1);
+        }
+
+        .colon {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .timezone {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 20px;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .format-toggle {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .vue-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #42b883;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .performance-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="vue-badge">Vue.js</div>
+        <div class="container">
+            <h1>Digital Timer</h1>
+            <div class="date-display">{{ currentDate }}</div>
+            <div class="time-display">
+                <span>{{ formattedHours }}</span>
+                <span class="colon">:</span>
+                <span>{{ formattedMinutes }}</span>
+                <span class="colon">:</span>
+                <span>{{ formattedSeconds }}</span>
+                <span v-if="!is24Hour" style="font-size: 2rem; margin-left: 10px;">{{ period }}</span>
+            </div>
+            <div class="timezone">{{ timezone }} (UTC{{ timezoneOffset }})</div>
+            <div class="controls">
+                <button @click="toggleFormat">Toggle 12/24 Hour</button>
+                <button @click="toggleFullscreen">Fullscreen</button>
+            </div>
+        </div>
+        <div class="performance-info">FPS: {{ fps }}</div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    currentTime: new Date(),
+                    is24Hour: true,
+                    animationId: null,
+                    lastSecond: -1,
+                    frameCount: 0,
+                    lastFpsUpdate: 0,
+                    fps: 0
+                }
+            },
+            computed: {
+                hours() {
+                    return this.currentTime.getHours();
+                },
+                minutes() {
+                    return this.currentTime.getMinutes();
+                },
+                seconds() {
+                    return this.currentTime.getSeconds();
+                },
+                formattedHours() {
+                    let hours = this.hours;
+                    if (!this.is24Hour) {
+                        hours = hours % 12 || 12;
+                    }
+                    return String(hours).padStart(2, '0');
+                },
+                formattedMinutes() {
+                    return String(this.minutes).padStart(2, '0');
+                },
+                formattedSeconds() {
+                    return String(this.seconds).padStart(2, '0');
+                },
+                period() {
+                    return this.hours >= 12 ? ' PM' : ' AM';
+                },
+                currentDate() {
+                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                    return this.currentTime.toLocaleDateString('en-US', options);
+                },
+                timezone() {
+                    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+                },
+                timezoneOffset() {
+                    const offset = this.currentTime.getTimezoneOffset();
+                    const offsetHours = Math.floor(Math.abs(offset) / 60);
+                    const offsetMinutes = Math.abs(offset) % 60;
+                    const offsetSign = offset <= 0 ? '+' : '-';
+                    return `${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
+                }
+            },
+            methods: {
+                updateTime(timestamp) {
+                    const now = new Date();
+                    const currentSecond = now.getSeconds();
+                    
+                    // Only update reactive data when second changes
+                    if (currentSecond !== this.lastSecond) {
+                        this.lastSecond = currentSecond;
+                        this.currentTime = now;
+                    }
+                    
+                    // Calculate FPS
+                    this.frameCount++;
+                    if (timestamp - this.lastFpsUpdate >= 1000) {
+                        this.fps = Math.round(this.frameCount * 1000 / (timestamp - this.lastFpsUpdate));
+                        this.frameCount = 0;
+                        this.lastFpsUpdate = timestamp;
+                    }
+                    
+                    // Continue animation loop
+                    this.animationId = requestAnimationFrame(this.updateTime);
+                    console.log("1")
+                },
+                toggleFormat() {
+                    this.is24Hour = !this.is24Hour;
+                    this.lastSecond = -1; // Force update on next frame
+                },
+                toggleFullscreen() {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                },
+                handleVisibilityChange() {
+                    if (document.hidden) {
+                        if (this.animationId) {
+                            cancelAnimationFrame(this.animationId);
+                            this.animationId = null;
+                        }
+                    } else {
+                        if (!this.animationId) {
+                            this.lastSecond = -1; // Force update when page becomes visible
+                            this.animationId = requestAnimationFrame(this.updateTime);
+                        }
+                    }
+                }
+            },
+            mounted() {
+                // Initialize time
+                this.currentTime = new Date();
+                this.lastSecond = this.currentTime.getSeconds();
+                
+                // Start animation loop
+                this.animationId = requestAnimationFrame(this.updateTime);
+                
+                // Add visibility change listener
+                document.addEventListener('visibilitychange', this.handleVisibilityChange);
+            },
+            beforeUnmount() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
