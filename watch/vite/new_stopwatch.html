@@ -1,0 +1,109 @@
+<template>
+  <div class="stopwatch-container">
+    <h1 class="title">⏱️ Vue Stopwatch</h1>
+    
+    <div class="display">
+      {{ formattedTime }}
+    </div>
+    
+    <div class="controls">
+      <button 
+        v-if="!isRunning" 
+        @click="start" 
+        class="btn btn-start"
+      >
+        Start
+      </button>
+      <button 
+        v-if="isRunning" 
+        @click="stop" 
+        class="btn btn-stop"
+      >
+        Stop
+      </button>
+      <button 
+        @click="reset" 
+        class="btn btn-reset"
+        :disabled="elapsedTime === 0"
+      >
+        Reset
+      </button>
+      <button 
+        v-if="isRunning" 
+        @click="recordLap" 
+        class="btn btn-lap"
+      >
+        Lap
+      </button>
+    </div>
+    
+    <div class="laps-container" v-if="laps.length > 0">
+      <div 
+        v-for="(lap, index) in laps" 
+        :key="index" 
+        class="lap-item"
+      >
+        <span class="lap-number">Lap {{ laps.length - index }}</span>
+        <span class="lap-time">{{ formatTime(lap) }}</span>
+      </div>
+    </div>
+    <div class="laps-container" v-else>
+      <div class="no-laps">No laps recorded yet</div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onBeforeUnmount } from 'vue'
+
+const startTime = ref(null)
+const elapsedTime = ref(0)
+const timerInterval = ref(null)
+const isRunning = ref(false)
+const laps = ref([])
+
+const formattedTime = computed(() => {
+  return formatTime(elapsedTime.value)
+})
+
+const start = () => {
+  startTime.value = Date.now() - elapsedTime.value
+  timerInterval.value = setInterval(() => {
+    elapsedTime.value = Date.now() - startTime.value
+  }, 10)
+  isRunning.value = true
+}
+
+const stop = () => {
+  clearInterval(timerInterval.value)
+  isRunning.value = false
+}
+
+const reset = () => {
+  clearInterval(timerInterval.value)
+  elapsedTime.value = 0
+  isRunning.value = false
+  laps.value = []
+}
+
+const recordLap = () => {
+  laps.value.push(elapsedTime.value)
+}
+
+const formatTime = (milliseconds) => {
+  const totalSeconds = Math.floor(milliseconds / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  const ms = Math.floor((milliseconds % 1000) / 10)
+  
+  return `${pad(minutes)}:${pad(seconds)}.${pad(ms)}`
+}
+
+const pad = (number) => {
+  return number.toString().padStart(2, '0')
+}
+
+onBeforeUnmount(() => {
+  clearInterval(timerInterval.value)
+})
+</script>

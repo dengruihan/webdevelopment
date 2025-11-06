@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>纯 JS 秒表</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="stopwatch-container">
+        <h1>秒表</h1>
+        
+        <div class="display" id="display">
+            <span id="minutes">00</span>:<span id="seconds">00</span>:<span id="milliseconds">00</span>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn">开始</button>
+            <button id="stopBtn">停止</button>
+            <button id="resetBtn">重置</button>
+        </div>
+
+        <div class="laps-container">
+            <h2>计次</h2>
+            <ul id="lapsList"></ul>
+        </div>
+    </main>
+
+    <script src="stopwatch.js"></script>
+</body>
+</html>
